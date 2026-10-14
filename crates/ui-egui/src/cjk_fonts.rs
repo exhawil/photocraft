@@ -369,6 +369,21 @@ fn add_to_all_families(ctx: &egui::Context, name: String, mut data: FontData) {
     ctx.add_font(FontInsert { name, data, families });
 }
 
+/// Registers a Core-served script fallback in egui's UI font stacks. The text engine has its own
+/// served-font registry; registering there alone does not affect the menus and controls drawn by
+/// egui, which is especially visible in WebAssembly builds where `Sources::system()` is empty.
+pub fn install_served_font(ctx: &egui::Context, family: &str, bytes: Vec<u8>) {
+    if bytes.is_empty() {
+        return;
+    }
+    let name = format!("fw3-served-{family}");
+    if ctx.fonts(|fonts| fonts.definitions().font_data.contains_key(&name)) {
+        return;
+    }
+    add_to_all_families(ctx, name, FontData::from_owned(bytes));
+    ctx.request_repaint();
+}
+
 /// The egui plugin that watches drawn text and loads fallback fonts on demand.
 pub struct CjkFontPlugin(pub CjkFallback);
 

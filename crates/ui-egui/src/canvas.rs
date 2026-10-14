@@ -2675,9 +2675,7 @@ fn start_screen(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                 ui.add_space(22.0);
                 home_recent(app, ui, &recent);
             }
-            ui.add_space(26.0);
-            crate::links::discord_button(app, ui, 190.0);
-            ui.add_space(10.0);
+            ui.add_space(22.0);
             crate::links::link_row(app, ui);
         });
     });

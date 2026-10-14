@@ -184,6 +184,11 @@ fn load_font_manifest(served: Served, ctx: egui::Context) {
         served.lock().unwrap_or_else(|e| e.into_inner()).files = files;
         // The families for the font menus, and the script fallbacks (the manifest's `scripts`).
         served_fonts::add_fonts(&fonts);
+        // UI controls also draw CJK language names on the web. They cannot read system fonts, so
+        // request the host-provided script fallbacks up front instead of waiting for document text.
+        for family in served_fonts::script_fallback_families() {
+            served_fonts::request(&family);
+        }
         // Fetch now the fallbacks of the scripts the browser's languages use (an Arabic reader gets
         // the Arabic font before typing); the rest is fetched when text or a font menu needs it.
         served_fonts::request_for_languages(browser_languages().iter().map(String::as_str));
@@ -277,6 +282,12 @@ impl WebShell {
                     Err(e) => log::error!("couldn't fetch served font {file}: {e}"),
                 }
             });
+        }
+        let ui_fallbacks = served_fonts::script_fallback_families();
+        for (family, bytes) in &arrived {
+            if ui_fallbacks.iter().any(|fallback| fallback == family) {
+                photocraft_ui_egui::cjk_fonts::install_served_font(ctx, family, bytes.clone());
+            }
         }
         served_fonts::install(&mut self.app, arrived);
     }
